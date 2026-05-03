@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EQ Collectibles Tracker</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0f0f1a;
+  --bg2:     #1a1a2e;
+  --bg3:     #16213e;
+  --accent:  #c9a227;
+  --accent2: #e8c547;
+  --text:    #d4c5a9;
+  --dim:     #7a6f5f;
+  --green:   #4caf7d;
+  --border:  #2a2a4a;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ---- Shell ---- */
+#shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-bottom: 2px solid var(--accent);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+header h1 { font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+
+/* ---- Upload bar ---- */
+.upload-bar {
+  flex-shrink: 0;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 20px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.ug { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ug label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+.file-btn {
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.file-btn:hover { background: var(--accent); color: var(--bg); }
+input[type="file"] { display: none; }
+.fstatus { font-size: 12px; color: var(--dim); }
+.fstatus.ok { color: var(--green); }
+.pills { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.pill {
+  background: var(--bg2);
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.pill-x { cursor: pointer; opacity: .6; font-size: 12px; line-height: 1; }
+.pill-x:hover { opacity: 1; }
+
+/* ---- Tabs ---- */
+.tabs {
+  flex-shrink: 0;
+  display: flex;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.tab {
+  padding: 9px 14px;
+  cursor: pointer;
+  color: var(--dim);
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- Views ---- */
+.views { flex: 1; overflow: hidden; display: flex; }
+.view { display: none; flex: 1; overflow: hidden; }
+.view.active { display: flex; }
+
+/* Browse view: sidebar + content */
+.sidebar {
+  width: 210px;
+  min-width: 160px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 6px 0;
+}
+.sitem {
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sitem:hover { background: var(--bg3); }
+.sitem.active { background: var(--bg3); border-left: 2px solid var(--accent); padding-left: 10px; }
+.sitem .sname { font-size: 13px; }
+.sitem .scnt  { font-size: 11px; color: var(--dim); white-space: nowrap; }
+.sitem.done .sname { color: var(--dim); }
+
+.vcontent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+}
+
+/* Tabular views (no sidebar) */
+.vfull {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+}
+
+/* ---- Shared content ---- */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--dim);
+  gap: 8px;
+  text-align: center;
+}
+.placeholder .ico { font-size: 44px; opacity: .25; }
+
+.summary {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 7px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.summary strong { color: var(--text); }
+.summary span { color: var(--dim); }
+
+.exp-title { font-size: 17px; color: var(--accent); margin-bottom: 10px; }
+
+.gh {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 14px 0 5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ilist { list-style: none; }
+.irow  { padding: 2px 0; display: flex; align-items: center; gap: 7px; font-size: 13px; }
+.irow .dot { color: var(--dim); width: 12px; text-align: center; }
+.irow .dot.ih { color: var(--accent2); }
+
+a { color: var(--text); text-decoration: none; }
+a:hover { color: var(--accent2); text-decoration: underline; }
+
+.badge {
+  background: var(--green);
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* Filter bar */
+.fbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.finput {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 13px;
+  width: 220px;
+}
+.finput:focus { outline: none; border-color: var(--accent); }
+select.finput { width: 300px; cursor: pointer; }
+.fcnt { font-size: 12px; color: var(--dim); }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left;
+  color: var(--accent);
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td { padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:hover td { background: var(--bg3); }
+td:first-child { color: var(--dim); width: 36px; }
+
+.empty-msg { color: var(--dim); padding: 20px 0; }
+
+/* ---- Help button ---- */
+.help-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--dim);
+  color: var(--dim);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.help-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- Help modal ---- */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  width: min(720px, 92vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.modal-header h2 { font-size: 16px; color: var(--accent); flex: 1; }
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body {
+  overflow-y: auto;
+  padding: 18px 22px;
+  line-height: 1.7;
+}
+.modal-body h3 {
+  color: var(--accent);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin: 20px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-body h3:first-child { margin-top: 0; }
+.modal-body p { color: var(--text); margin-bottom: 8px; font-size: 13px; }
+.modal-body ul { list-style: none; padding: 0; margin: 0 0 8px; }
+.modal-body li { color: var(--text); font-size: 13px; padding: 3px 0 3px 14px; position: relative; }
+.modal-body li::before { content: '\2666'; color: var(--accent); position: absolute; left: 0; font-size: 10px; top: 5px; }
+.modal-body .tab-entry { margin-bottom: 12px; }
+.modal-body .tab-name { color: var(--accent2); font-weight: 600; }
+.modal-body code {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent2);
+}
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <header>
+    <h1>&#9876; EQ Collectibles Tracker</h1>
+    <button class="help-btn" onclick="openHelp()" title="How to use this app">?</button>
+  </header>
+
+  <!-- Help modal -->
+  <div class="modal-backdrop" id="helpBackdrop" onclick="closeHelpOutside(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>&#128220; How to Use EQ Collectibles Tracker</h2>
+        <button class="modal-close" onclick="closeHelp()" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <h3>Overview</h3>
+        <p>This tool reads your EverQuest character achievements export and shows you which collectible items you are still missing, organized by expansion. Load a house storage file to see which of those missing items you already have stashed away and ready to turn in.</p>
+
+        <h3>In-Game Export Commands</h3>
+        <p>All files are generated by typing these commands in the EverQuest chat window. The output files are saved to your EverQuest folder automatically.</p>
+        <ul>
+          <li><code>/Outputfile achievements</code> &mdash; exports your full achievement progress, including collection completion status. Load this with <strong>Upload File</strong> next to <em>Achievements</em>.</li>
+          <li><code>/Outputfile realestate</code> &mdash; exports a tab-separated list of every item in your in-game house or real estate storage. Load this with <strong>Upload Files</strong> next to <em>House Files</em>. Run it while inside each house you want to scan.</li>
+          <li><code>/Outputfile inventory</code> &mdash; exports your character's current inventory (bags, bank, etc.) as a tab-separated file. Load this the same way as house files &mdash; useful if you keep collectibles in your bank or on your character.</li>
+        </ul>
+
+        <h3>Files You Need</h3>
+        <div class="tab-entry">
+          <p><span class="tab-name">Achievements file</span> &mdash; <code>CharacterName_Server-Achievements.txt</code></p>
+          <p>Type <code>/Outputfile achievements</code> in-game. The file is saved to your EverQuest folder. Click <strong>Upload File</strong> next to <em>Achievements</em> and select it.</p>
+        </div>
+        <div class="tab-entry">
+          <p><span class="tab-name">House / inventory files</span> &mdash; real-estate or inventory export, or a plain item list</p>
+          <p>You have three options for getting items into a house file:</p>
+          <ul>
+            <li>Type <code>/Outputfile realestate</code> while inside a house to export everything stored there. The app detects this tab-separated format automatically.</li>
+            <li>Type <code>/Outputfile inventory</code> to export bags, bank, and worn items &mdash; handy if collectibles are stashed on your character or in the bank.</li>
+            <li>Take screenshots of your house inventory in-game, paste them into ChatGPT, and ask it to extract the item names into a plain list &mdash; one name per line. Save as a <code>.txt</code> file.</li>
+          </ul>
+          <p>You can load <strong>multiple</strong> files at once. Click <strong>Upload Files</strong> and select as many as you need. Remove any with the &times; on its tag.</p>
+        </div>
+
+        <h3>Tabs</h3>
+        <div class="tab-entry">
+          <p><span class="tab-name">Browse Missing</span></p>
+          <p>Select an expansion from the left sidebar to see all collectibles you have not yet obtained, grouped by collection set. If house files are loaded, items already in your house are highlighted with a <strong style="color:var(--accent2)">&diams;</strong> and an IN HOUSE badge so you know they are ready to turn in.</p>
+        </div>
+        <div class="tab-entry">
+          <p><span class="tab-name">vs House (one expansion)</span></p>
+          <p>Pick a single expansion from the dropdown to see a focused list of your missing collectibles for that expansion that are present in your house files. Great for targeted turn-ins.</p>
+        </div>
+        <div class="tab-entry">
+          <p><span class="tab-name">vs House (all expansions)</span></p>
+          <p>Same comparison as above but scans every expansion at once and shows a single flat sorted list. Useful when you just want to clear out everything your house has.</p>
+        </div>
+        <div class="tab-entry">
+          <p><span class="tab-name">All Houses vs All</span></p>
+          <p>Combines all loaded house files and matches them against every expansion simultaneously. Adds a <em>House File</em> column so you know exactly which house has each item &mdash; handy when collectibles are spread across multiple storage houses.</p>
+        </div>
+
+        <h3>Tips</h3>
+        <ul>
+          <li>Item names are clickable links &mdash; they open an Allakhazam search in a new tab so you can look up where to find them.</li>
+          <li>Re-export your achievements file from EverQuest after a play session, then reload it with <strong>Upload File</strong> to refresh without losing your house files.</li>
+          <li>The sidebar shows a count of missing items per expansion. If house files are loaded, the count also shows how many are in your house (<strong>&diams;N</strong>).</li>
+          <li>All processing is done locally in your browser &mdash; no data is uploaded anywhere.</li>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="upload-bar">
+    <div class="ug">
+      <label>Achievements</label>
+      <button class="file-btn" onclick="document.getElementById('achInput').click()">Upload File</button>
+      <input type="file" id="achInput" accept=".txt" onchange="loadAchievements(this)">
+      <span class="fstatus" id="achStatus">No file loaded</span>
+    </div>
+    <div class="ug">
+      <label>House Files</label>
+      <button class="file-btn" onclick="document.getElementById('houseInput').click()">Upload Files</button>
+      <input type="file" id="houseInput" accept=".txt" multiple onchange="loadHouseFiles(this)">
+      <div class="pills" id="housePills"><span class="fstatus">No house files loaded</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active"   data-tab="browse"    onclick="switchTab(this)">Browse Missing</div>
+    <div class="tab"          data-tab="one"        onclick="switchTab(this)">vs House (one expansion)</div>
+    <div class="tab"          data-tab="all"        onclick="switchTab(this)">vs House (all expansions)</div>
+    <div class="tab"          data-tab="allhouses"  onclick="switchTab(this)">All Houses vs All</div>
+  </div>
+
+  <div class="views">
+
+    <!-- Browse -->
+    <div class="view active" id="view-browse">
+      <div class="sidebar" id="sidebar"></div>
+      <div class="vcontent" id="browseContent">
+        <div class="placeholder"><div class="ico">&#128220;</div><div>Load an achievements file, then select an expansion</div></div>
+      </div>
+    </div>
+
+    <!-- vs House one -->
+    <div class="view" id="view-one">
+      <div class="vfull" id="oneContent">
+        <div class="placeholder"><div class="ico">&#127968;</div><div>Load an achievements file and at least one house file</div></div>
+      </div>
+    </div>
+
+    <!-- vs House all -->
+    <div class="view" id="view-all">
+      <div class="vfull" id="allContent">
+        <div class="placeholder"><div class="ico">&#127968;</div><div>Load an achievements file and at least one house file</div></div>
+      </div>
+    </div>
+
+    <!-- All houses vs all -->
+    <div class="view" id="view-allhouses">
+      <div class="vfull" id="allhousesContent">
+        <div class="placeholder"><div class="ico">&#127978;</div><div>Load an achievements file and house files to compare all at once</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ---- Help modal ----
+function openHelp()  { document.getElementById('helpBackdrop').classList.add('open'); }
+function closeHelp() { document.getElementById('helpBackdrop').classList.remove('open'); }
+function closeHelpOutside(e) { if (e.target === document.getElementById('helpBackdrop')) closeHelp(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
+
+// ---- State ----
+let expansions   = {};   // {expansion: {group: [item, ...]}}
+let houseData    = {};   // {filename: Set<lowercase name>}
+let activeTab    = 'browse';
+let activeExp    = null;
+
+// ---- File loading ----
+function loadAchievements(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = e => {
+    expansions = parseAchievements(e.target.result);
+    const n = Object.keys(expansions).length;
+    const el = document.getElementById('achStatus');
+    el.textContent = file.name + ' \u2014 ' + n + ' expansion(s)';
+    el.className = 'fstatus ok';
+    activeExp = null;
+    refreshAll();
+  };
+  rd.readAsText(file, 'windows-1252');
+  input.value = '';
+}
+
+function loadHouseFiles(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  let pending = files.length;
+  for (const file of files) {
+    const rd = new FileReader();
+    rd.onload = e => {
+      houseData[file.name] = parseHouseAuto(e.target.result);
+      if (--pending === 0) { renderPills(); refreshAll(); }
+    };
+    rd.readAsText(file, 'windows-1252');
+  }
+  input.value = '';
+}
+
+function removeHouse(name) {
+  delete houseData[name];
+  renderPills();
+  refreshAll();
+}
+
+function renderPills() {
+  const el = document.getElementById('housePills');
+  const keys = Object.keys(houseData);
+  if (!keys.length) {
+    el.innerHTML = '<span class="fstatus">No house files loaded</span>';
+    return;
+  }
+  el.innerHTML = keys.map(n =>
+    `<div class="pill">${esc(n)}<span class="pill-x" data-fn="${esc(n)}" title="Remove">\u2715</span></div>`
+  ).join('');
+}
+
+document.getElementById('housePills').addEventListener('click', e => {
+  const x = e.target.closest('.pill-x');
+  if (x) removeHouse(x.dataset.fn);
+});
+
+// ---- Parsers ----
+function parseAchievements(text) {
+  const result = {};
+  let inCollections = false, currentExp = null, currentGroup = null;
+
+  for (let line of text.split('\n')) {
+    line = line.replace(/\r$/, '');
+    if (!line) continue;
+
+    if (!line.startsWith('I\t') && !line.startsWith('C\t')) {
+      const ci = line.indexOf(': ');
+      if (ci !== -1) {
+        currentExp        = line.substring(0, ci).trim();
+        const cat         = line.substring(ci + 2).trim();
+        inCollections     = cat === 'Collections';
+        currentGroup      = null;
+        if (inCollections && !result[currentExp]) result[currentExp] = {};
+      }
+      continue;
+    }
+
+    if (!inCollections) continue;
+
+    const parts  = line.split('\t');
+    const status = parts[0];
+    let depth = 0, ni = 1;
+    while (ni < parts.length && parts[ni] === '') { depth++; ni++; }
+    if (ni >= parts.length) continue;
+
+    const name     = parts[ni];
+    const progress = ni + 1 < parts.length ? parts[ni + 1] : null;
+
+    if (depth === 0) {
+      currentGroup = name;
+    } else if (depth === 1 && currentGroup && status === 'I' && progress) {
+      const p = progress.split('/');
+      if (p.length === 2) {
+        const got = parseInt(p[0], 10), tot = parseInt(p[1], 10);
+        if (!isNaN(got) && !isNaN(tot) && got < tot) {
+          if (!result[currentExp][currentGroup]) result[currentExp][currentGroup] = [];
+          result[currentExp][currentGroup].push(name);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+function parseHouse(text) {
+  const s = new Set();
+  for (const line of text.split('\n')) {
+    const n = line.replace(/\r$/, '').trim();
+    if (n) s.add(n.toLowerCase());
+  }
+  return s;
+}
+
+function parseRealEstate(text) {
+  const s = new Set();
+  const lines = text.split('\n');
+  // First line is the header — find ItemName column index
+  const headers = lines[0].replace(/\r$/, '').split('\t');
+  const itemCol = headers.indexOf('ItemName');
+  if (itemCol === -1) return s;
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].replace(/\r$/, '').split('\t');
+    const name = parts[itemCol]?.trim();
+    if (name) s.add(name.toLowerCase());
+  }
+  return s;
+}
+
+function parseInventory(text) {
+  const s = new Set();
+  const lines = text.split('\n');
+  const headers = lines[0].replace(/\r$/, '').split('\t');
+  const nameCol = headers.indexOf('Name');
+  if (nameCol === -1) return s;
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].replace(/\r$/, '').split('\t');
+    const name = parts[nameCol]?.trim();
+    if (name && name !== 'Empty') s.add(name.toLowerCase());
+  }
+  return s;
+}
+
+function parseHouseAuto(text) {
+  if (text.startsWith('RealEstateLocation\t')) return parseRealEstate(text);
+  if (text.startsWith('Location\tName\t'))      return parseInventory(text);
+  return parseHouse(text);
+}
+
+// ---- House helpers ----
+function allHouseMap() {
+  // Map: lowercase item name -> first filename containing it
+  const m = new Map();
+  for (const [fname, items] of Object.entries(houseData))
+    for (const item of items)
+      if (!m.has(item)) m.set(item, fname);
+  return m;
+}
+
+function combinedHouseSet() {
+  const s = new Set();
+  for (const items of Object.values(houseData)) for (const i of items) s.add(i);
+  return s;
+}
+
+// ---- Allakhazam link ----
+function allakLink(name) {
+  const url = 'https://everquest.allakhazam.com/search.html?q=' + encodeURIComponent(name);
+  return `<a href="${url}" target="_blank" rel="noopener">${esc(name)}</a>`;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ---- Tab switching ----
+function switchTab(el) {
+  activeTab = el.dataset.tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === el));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + activeTab));
+  renderActiveTab();
+}
+
+function refreshAll() {
+  renderSidebar();
+  renderActiveTab();
+}
+
+function renderActiveTab() {
+  switch (activeTab) {
+    case 'browse':    renderBrowseContent(); break;
+    case 'one':       renderOne(); break;
+    case 'all':       renderAll(); break;
+    case 'allhouses': renderAllHouses(); break;
+  }
+}
+
+// ---- Browse sidebar ----
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  const keys = Object.keys(expansions).sort();
+  if (!keys.length) {
+    sb.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--dim)">Load achievements file to begin</div>';
+    return;
+  }
+  const hmap = Object.keys(houseData).length ? allHouseMap() : null;
+  sb.innerHTML = keys.map(exp => {
+    const groups  = expansions[exp];
+    const missing = Object.values(groups).reduce((s,v) => s + v.length, 0);
+    let inHouse   = 0;
+    if (hmap) for (const items of Object.values(groups)) for (const i of items) if (hmap.has(i.toLowerCase())) inHouse++;
+    const done    = missing === 0;
+    let cnt = done ? '\u2713' : String(missing);
+    if (inHouse) cnt += ' (\u2666' + inHouse + ')';
+    return `<div class="sitem${exp===activeExp?' active':''}${done?' done':''}" onclick="selectExp(this,'${esc(exp).replace(/'/g,"\\'")}')">
+      <span class="sname">${esc(exp)}</span><span class="scnt">${cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectExp(el, exp) {
+  activeExp = exp;
+  document.querySelectorAll('.sitem').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  renderBrowseContent();
+}
+
+// ---- Browse content ----
+function renderBrowseContent() {
+  const el = document.getElementById('browseContent');
+  if (!activeExp) {
+    el.innerHTML = '<div class="placeholder"><div class="ico">&#128220;</div><div>Select an expansion from the sidebar</div></div>';
+    return;
+  }
+  const groups  = expansions[activeExp] || {};
+  const hmap    = Object.keys(houseData).length ? allHouseMap() : null;
+  const missing = Object.values(groups).reduce((s,v) => s+v.length, 0);
+  if (!missing) {
+    el.innerHTML = `<h2 class="exp-title">${esc(activeExp)}</h2>
+      <div class="summary"><span>All collectibles complete! \u2713</span></div>`;
+    return;
+  }
+  let inHouse = 0;
+  if (hmap) for (const items of Object.values(groups)) for (const i of items) if (hmap.has(i.toLowerCase())) inHouse++;
+
+  const summaryParts = [`<strong>${missing}</strong> <span>missing</span>`];
+  if (hmap && inHouse > 0) summaryParts.push(`<strong>${inHouse}</strong> <span>in house \u2666</span>`);
+
+  const groupsHtml = Object.entries(groups)
+    .filter(([,v]) => v.length)
+    .sort(([a],[b]) => a.localeCompare(b))
+    .map(([g, items]) => {
+      let gh = 0;
+      const rows = items.map(item => {
+        const ih = hmap && hmap.has(item.toLowerCase());
+        if (ih) gh++;
+        return `<li class="irow">
+          <span class="dot${ih?' ih':''}">${ih?'\u2666':'\u00b7'}</span>
+          ${allakLink(item)}
+          ${ih ? '<span class="badge">IN HOUSE</span>' : ''}
+        </li>`;
+      }).join('');
+      let label = `${esc(g)} \u2014 ${items.length} missing`;
+      if (gh) label += `, ${gh} in house`;
+      return `<div class="gh">${label}</div><ul class="ilist">${rows}</ul>`;
+    }).join('');
+
+  el.innerHTML = `<h2 class="exp-title">${esc(activeExp)}</h2>
+    <div class="summary">${summaryParts.join('  |  ')}</div>
+    ${groupsHtml}`;
+}
+
+// ---- vs House (one expansion) ----
+function renderOne() {
+  const el = document.getElementById('oneContent');
+  if (!Object.keys(expansions).length || !Object.keys(houseData).length) {
+    el.innerHTML = '<div class="placeholder"><div class="ico">&#127968;</div><div>Load an achievements file and at least one house file</div></div>';
+    return;
+  }
+  const hset  = combinedHouseSet();
+  const sorted = Object.keys(expansions).sort();
+
+  const prevExp = el.querySelector('select')?.value;
+  const opts = sorted.map(exp => {
+    const cnt = Object.values(expansions[exp]).flatMap(v=>v).filter(i=>hset.has(i.toLowerCase())).length;
+    return `<option value="${esc(exp)}">${esc(exp)} (${cnt} match${cnt!==1?'es':''})</option>`;
+  }).join('');
+
+  el.innerHTML = `<div class="fbar">
+    <label style="color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px">Expansion</label>
+    <select class="finput" id="oneSelect" onchange="renderOne()">${opts}</select>
+  </div><div id="oneTable"></div>`;
+
+  const sel = document.getElementById('oneSelect');
+  if (prevExp && sorted.includes(prevExp)) sel.value = prevExp;
+
+  const exp    = sel.value;
+  const groups = expansions[exp] || {};
+  const matches = Object.entries(groups)
+    .flatMap(([g, items]) => items.filter(i => hset.has(i.toLowerCase())).map(i => [i,g]))
+    .sort((a,b) => a[0].localeCompare(b[0]));
+
+  const tbl = document.getElementById('oneTable');
+  if (!matches.length) {
+    tbl.innerHTML = '<p class="empty-msg">No missing collectibles from this expansion are in your house files.</p>';
+    return;
+  }
+  const rows = matches.map(([item,g],i) =>
+    `<tr><td>${i+1}</td><td>${allakLink(item)}</td><td>${esc(g)}</td></tr>`).join('');
+  tbl.innerHTML = `<div class="summary"><strong>${matches.length}</strong> <span>match(es)</span></div>
+    <table><thead><tr><th>#</th><th>Item</th><th>Collection</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---- vs House (all expansions) ----
+function renderAll() {
+  const el = document.getElementById('allContent');
+  if (!Object.keys(expansions).length || !Object.keys(houseData).length) {
+    el.innerHTML = '<div class="placeholder"><div class="ico">&#127968;</div><div>Load an achievements file and at least one house file</div></div>';
+    return;
+  }
+  const hset = combinedHouseSet();
+  const matches = [];
+  for (const [exp, groups] of Object.entries(expansions))
+    for (const [g, items] of Object.entries(groups))
+      for (const item of items)
+        if (hset.has(item.toLowerCase())) matches.push([item, g, exp]);
+  matches.sort((a,b) => a[0].localeCompare(b[0]));
+
+  if (!matches.length) {
+    el.innerHTML = '<p class="empty-msg" style="padding:20px">No missing collectibles from any expansion are in your house files.</p>';
+    return;
+  }
+  const rows = matches.map(([item,g,exp],i) =>
+    `<tr><td>${i+1}</td><td>${allakLink(item)}</td><td>${esc(g)}</td><td>${esc(exp)}</td></tr>`).join('');
+  el.innerHTML = `<div class="summary"><strong>${matches.length}</strong> <span>match(es) across all expansions</span></div>
+    <table><thead><tr><th>#</th><th>Item</th><th>Collection</th><th>Expansion</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---- All houses vs all expansions ----
+function renderAllHouses() {
+  const el = document.getElementById('allhousesContent');
+  if (!Object.keys(expansions).length || !Object.keys(houseData).length) {
+    el.innerHTML = '<div class="placeholder"><div class="ico">&#127978;</div><div>Load an achievements file and house files to compare all at once</div></div>';
+    return;
+  }
+  const hmap  = allHouseMap();
+  const matches = [];
+  for (const [exp, groups] of Object.entries(expansions))
+    for (const [g, items] of Object.entries(groups))
+      for (const item of items) {
+        const src = hmap.get(item.toLowerCase());
+        if (src) matches.push([item, g, exp, src]);
+      }
+  matches.sort((a,b) => a[0].localeCompare(b[0]));
+
+  const hCount = Object.keys(houseData).length;
+  const uCount = hmap.size;
+
+  if (!matches.length) {
+    el.innerHTML = `<div class="summary"><strong>${hCount}</strong> <span>house file(s),</span> <strong>${uCount}</strong> <span>unique item(s)</span></div>
+      <p class="empty-msg">No missing collectibles were found in any house file.</p>`;
+    return;
+  }
+  const rows = matches.map(([item,g,exp,src],i) =>
+    `<tr><td>${i+1}</td><td>${allakLink(item)}</td><td>${esc(g)}</td><td>${esc(exp)}</td><td>${esc(src)}</td></tr>`).join('');
+  el.innerHTML = `<div class="summary">
+    <span><strong>${hCount}</strong> house file(s), <strong>${uCount}</strong> unique item(s)</span>
+    <span>|</span><strong>${matches.length}</strong> <span>match(es) found</span>
+  </div>
+  <table><thead><tr><th>#</th><th>Item</th><th>Collection</th><th>Expansion</th><th>House File</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+</script>
+</body>
+</html>

@@ -233,6 +233,48 @@ td:first-child { color: var(--dim); width: 36px; }
 
 .empty-msg { color: var(--dim); padding: 20px 0; }
 
+/* ---- First-load hint ---- */
+@keyframes hintGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,162,39,0); }
+  50%       { box-shadow: 0 0 0 7px rgba(201,162,39,.45); }
+}
+@keyframes hintDrop {
+  0%   { opacity: 0; transform: translateY(-6px); }
+  12%  { opacity: 1; transform: translateY(0); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.hint-bubble {
+  position: fixed;
+  top: 50px;
+  right: 14px;
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+  animation: hintDrop 4s ease forwards;
+}
+.hint-bubble::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 8px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid var(--accent);
+}
+.help-btn.hinting { animation: hintGlow 1s ease-in-out infinite; }
+
 /* ---- Help button ---- */
 .help-btn {
   margin-left: auto;
@@ -452,6 +494,25 @@ td:first-child { color: var(--dim); width: 36px; }
 </div>
 
 <script>
+// ---- First-load hint ----
+(function () {
+  if (localStorage.getItem('eq_hint_seen')) return;
+  localStorage.setItem('eq_hint_seen', '1');
+  const btn = document.querySelector('.help-btn');
+  btn.classList.add('hinting');
+  const bubble = document.createElement('div');
+  bubble.className = 'hint-bubble';
+  bubble.textContent = 'Start here!';
+  document.body.appendChild(bubble);
+  function dismiss() {
+    bubble.remove();
+    btn.classList.remove('hinting');
+    document.removeEventListener('click', dismiss);
+  }
+  bubble.addEventListener('animationend', dismiss);
+  document.addEventListener('click', dismiss);
+})();
+
 // ---- Help modal ----
 function openHelp()  { document.getElementById('helpBackdrop').classList.add('open'); }
 function closeHelp() { document.getElementById('helpBackdrop').classList.remove('open'); }

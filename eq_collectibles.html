@@ -496,8 +496,6 @@ td:first-child { color: var(--dim); width: 36px; }
 <script>
 // ---- First-load hint ----
 (function () {
-  if (localStorage.getItem('eq_hint_seen')) return;
-  localStorage.setItem('eq_hint_seen', '1');
   const btn = document.querySelector('.help-btn');
   btn.classList.add('hinting');
   const bubble = document.createElement('div');
